@@ -7,7 +7,19 @@ import (
 
 func HandleRequests() {
 	r := gin.Default()
+
+	// GET
 	r.GET("/tvshows", controllers.GetTvShows)
+
+	// POST
+	r.POST("tvshows/create", controllers.CreateTvShows)
+
+	// PUT
+
+	// PATCH
+
+	// DELETE
+
 	// r.GET("/:nome", controllers.Saudacao)
 	// r.POST("/alunos", controllers.CriaNovoAluno)
 	// r.GET("/alunos/:id", controllers.BuscaAlunoPorID)
