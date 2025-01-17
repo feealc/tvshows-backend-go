@@ -29,3 +29,19 @@ func CreateTvShows(c *gin.Context) {
 	database.DB.Create(&tvShow)
 	c.JSON(http.StatusCreated, tvShow)
 }
+
+func DeleteTvShow(c *gin.Context) {
+	var tvShow models.TvShow
+	id := c.Params.ByName("id")
+	database.DB.First(&tvShow, id)
+
+	if tvShow.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "TvShow not found",
+		})
+		return
+	}
+
+	database.DB.Delete(&tvShow, id)
+	c.JSON(http.StatusOK, gin.H{"message": "TvShow deleted successfully"})
+}
