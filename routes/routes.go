@@ -10,6 +10,7 @@ func HandleRequests() {
 
 	// TvShows
 	r.GET("/tvshows", controllers.GetTvShows)
+	r.GET("/tvshows/:id", controllers.GetTvShowId)
 	r.POST("/tvshows/create", controllers.CreateTvShows)
 	r.PUT("/tvshows/:id", controllers.EditTvShow)
 	r.DELETE("/tvshows/:id", controllers.DeleteTvShow)
