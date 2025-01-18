@@ -14,6 +14,21 @@ func GetTvShows(c *gin.Context) {
 	c.JSON(http.StatusOK, tvShows)
 }
 
+func GetTvShowId(c *gin.Context) {
+	var tvShow models.TvShow
+	id := c.Params.ByName("id")
+	database.DB.First(&tvShow, id)
+
+	if tvShow.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "TvShow not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, tvShow)
+}
+
 func CreateTvShows(c *gin.Context) {
 	var tvShow models.TvShow
 
