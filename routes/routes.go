@@ -15,6 +15,7 @@ func HandleRequests() {
 	r.POST("/tvshows/create", controllers.CreateTvShows)
 
 	// PUT
+	r.PUT("/tvshows/:id", controllers.EditTvShow)
 
 	// PATCH
 
