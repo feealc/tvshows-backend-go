@@ -12,9 +12,10 @@ func HandleRequests() {
 	r.GET("/tvshows", controllers.TvShowListAll)
 	r.GET("/tvshows/:id", controllers.TvShowListById)
 	r.POST("/tvshows/create", controllers.TvShowCreate)
+	r.POST("/tvshows/create/batch", controllers.TvShowCreateBatch)
 	r.PUT("/tvshows/:id", controllers.TvShowEdit)
 	r.DELETE("/tvshows/:id", controllers.TvShowDelete)
-	// truncate
+	r.DELETE("/tvshows/truncate", controllers.TvShowTruncate)
 
 	// Episodes
 	r.GET("/episodes", controllers.EpisodeListAll)
