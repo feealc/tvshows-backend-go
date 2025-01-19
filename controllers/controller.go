@@ -29,7 +29,7 @@ func GetTvShowId(c *gin.Context) {
 	c.JSON(http.StatusOK, tvShow)
 }
 
-func CreateTvShows(c *gin.Context) {
+func CreateTvShow(c *gin.Context) {
 	var tvShow models.TvShow
 
 	if err := c.ShouldBindJSON(&tvShow); err != nil {
@@ -90,4 +90,56 @@ func DeleteTvShow(c *gin.Context) {
 
 	database.DB.Delete(&tvShow, id)
 	c.JSON(http.StatusOK, gin.H{"message": "TvShow deleted successfully"})
+}
+
+//
+
+func EpisodeListAll(c *gin.Context) {
+	var episodes []models.Episode
+	database.DB.Order("tv_show_id, season, episode").Find(&episodes)
+	c.JSON(http.StatusOK, episodes)
+}
+
+func EpisodeCreate(c *gin.Context) {
+	var episode models.Episode
+
+	if err := c.ShouldBindJSON(&episode); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error()})
+		return
+	}
+
+	if err := models.ValidEpisode(&episode); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error()})
+		return
+	}
+
+	var tvShow models.TvShow
+	database.DB.First(&tvShow, episode.TvShowId)
+
+	if tvShow.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "TvShow not found",
+		})
+		return
+	}
+
+	if ret := database.DB.Create(&episode); ret.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": ret.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, episode)
+}
+
+func EpisodeTruncate(c *gin.Context) {
+	if ret := database.DB.Where("tv_show_id is not null").Delete(&models.Episode{}); ret.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": ret.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Episodes truncated",
+	})
 }

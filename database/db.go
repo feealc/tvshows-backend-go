@@ -24,4 +24,5 @@ func ConnectDataBase() {
 	}
 
 	DB.AutoMigrate(&models.TvShow{})
+	DB.AutoMigrate(&models.Episode{})
 }

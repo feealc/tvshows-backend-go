@@ -11,9 +11,19 @@ func HandleRequests() {
 	// TvShows
 	r.GET("/tvshows", controllers.GetTvShows)
 	r.GET("/tvshows/:id", controllers.GetTvShowId)
-	r.POST("/tvshows/create", controllers.CreateTvShows)
+	r.POST("/tvshows/create", controllers.CreateTvShow)
 	r.PUT("/tvshows/:id", controllers.EditTvShow)
 	r.DELETE("/tvshows/:id", controllers.DeleteTvShow)
+	// truncate
+
+	// Episodes
+	r.GET("/episodes", controllers.EpisodeListAll)
+	// get tv show by id
+	// get tv show by id e season
+	r.POST("/episodes/create", controllers.EpisodeCreate)
+	// post batch create (slice)
+	// put watch episode (set watched date to now)
+	r.DELETE("/episodes/truncate", controllers.EpisodeTruncate)
 
 	r.Run()
 }
