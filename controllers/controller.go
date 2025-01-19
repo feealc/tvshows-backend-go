@@ -9,18 +9,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetTvShows(c *gin.Context) {
+func TvShowListAll(c *gin.Context) {
 	var tvShows []models.TvShow
 	database.DB.Order("name").Find(&tvShows)
 	c.JSON(http.StatusOK, tvShows)
 }
 
-func GetTvShowId(c *gin.Context) {
+func TvShowListById(c *gin.Context) {
 	var tvShow models.TvShow
 	id := c.Params.ByName("id")
 	database.DB.First(&tvShow, id)
 
-	if tvShow.ID == 0 {
+	if tvShow.TmdbId == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "TvShow not found",
 		})
@@ -30,18 +30,20 @@ func GetTvShowId(c *gin.Context) {
 	c.JSON(http.StatusOK, tvShow)
 }
 
-func CreateTvShow(c *gin.Context) {
+func TvShowCreate(c *gin.Context) {
 	var tvShow models.TvShow
 
 	if err := c.ShouldBindJSON(&tvShow); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error()})
+			"error": err.Error(),
+		})
 		return
 	}
 
 	if err := models.ValidTvShow(&tvShow); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error()})
+			"error": err.Error(),
+		})
 		return
 	}
 
@@ -49,12 +51,12 @@ func CreateTvShow(c *gin.Context) {
 	c.JSON(http.StatusCreated, tvShow)
 }
 
-func EditTvShow(c *gin.Context) {
+func TvShowEdit(c *gin.Context) {
 	var tvShow models.TvShow
 	id := c.Params.ByName("id")
 	database.DB.First(&tvShow, id)
 
-	if tvShow.ID == 0 {
+	if tvShow.TmdbId == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "TvShow not found",
 		})
@@ -63,13 +65,15 @@ func EditTvShow(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&tvShow); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error()})
+			"error": err.Error(),
+		})
 		return
 	}
 
 	if err := models.ValidTvShow(&tvShow); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error()})
+			"error": err.Error(),
+		})
 		return
 	}
 
@@ -77,12 +81,12 @@ func EditTvShow(c *gin.Context) {
 	c.JSON(http.StatusOK, tvShow)
 }
 
-func DeleteTvShow(c *gin.Context) {
+func TvShowDelete(c *gin.Context) {
 	var tvShow models.TvShow
 	id := c.Params.ByName("id")
 	database.DB.First(&tvShow, id)
 
-	if tvShow.ID == 0 {
+	if tvShow.TmdbId == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "TvShow not found",
 		})
@@ -90,14 +94,16 @@ func DeleteTvShow(c *gin.Context) {
 	}
 
 	database.DB.Delete(&tvShow, id)
-	c.JSON(http.StatusOK, gin.H{"message": "TvShow deleted successfully"})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "TvShow deleted successfully",
+	})
 }
 
 //
 
 func EpisodeListAll(c *gin.Context) {
 	var episodes []models.Episode
-	database.DB.Order("tv_show_id, season, episode").Find(&episodes)
+	database.DB.Order("tmdb_id, season, episode").Find(&episodes)
 	c.JSON(http.StatusOK, episodes)
 }
 
@@ -106,20 +112,22 @@ func EpisodeCreate(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&episode); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error()})
+			"error": err.Error(),
+		})
 		return
 	}
 
 	if err := models.ValidEpisode(&episode); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error()})
+			"error": err.Error(),
+		})
 		return
 	}
 
 	var tvShow models.TvShow
-	database.DB.First(&tvShow, episode.TvShowId)
+	database.DB.First(&tvShow, episode.TmdbId)
 
-	if tvShow.ID == 0 {
+	if tvShow.TmdbId == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "TvShow not found",
 		})
@@ -128,7 +136,8 @@ func EpisodeCreate(c *gin.Context) {
 
 	if ret := database.DB.Create(&episode); ret.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": ret.Error.Error()})
+			"error": ret.Error.Error(),
+		})
 		return
 	}
 	c.JSON(http.StatusCreated, episode)
@@ -153,17 +162,17 @@ func EpisodeCreateBatch(c *gin.Context) {
 		}
 
 		var tvShow models.TvShow
-		database.DB.First(&tvShow, episode.TvShowId)
+		database.DB.First(&tvShow, episode.TmdbId)
 
-		if tvShow.ID == 0 {
+		if tvShow.TmdbId == 0 {
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": fmt.Sprintf("TvShow %d not found", episode.TvShowId),
+				"error": fmt.Sprintf("TvShow %d not found", episode.TmdbId),
 			})
 			return
 		}
 
 		var episodeExist models.Episode
-		rows := database.DB.Where(&models.Episode{TvShowId: episode.TvShowId, Season: episode.Season, Episode: episode.Episode}).First(&episodeExist).RowsAffected
+		rows := database.DB.Where(&models.Episode{TmdbId: episode.TmdbId, Season: episode.Season, Episode: episode.Episode}).First(&episodeExist).RowsAffected
 
 		if rows > 0 {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -183,9 +192,10 @@ func EpisodeCreateBatch(c *gin.Context) {
 }
 
 func EpisodeTruncate(c *gin.Context) {
-	if ret := database.DB.Where("tv_show_id is not null").Delete(&models.Episode{}); ret.Error != nil {
+	if ret := database.DB.Where("tmdb_id is not null").Delete(&models.Episode{}); ret.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": ret.Error.Error()})
+			"error": ret.Error.Error(),
+		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{

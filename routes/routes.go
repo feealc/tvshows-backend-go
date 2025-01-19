@@ -9,11 +9,11 @@ func HandleRequests() {
 	r := gin.Default()
 
 	// TvShows
-	r.GET("/tvshows", controllers.GetTvShows)
-	r.GET("/tvshows/:id", controllers.GetTvShowId)
-	r.POST("/tvshows/create", controllers.CreateTvShow)
-	r.PUT("/tvshows/:id", controllers.EditTvShow)
-	r.DELETE("/tvshows/:id", controllers.DeleteTvShow)
+	r.GET("/tvshows", controllers.TvShowListAll)
+	r.GET("/tvshows/:id", controllers.TvShowListById)
+	r.POST("/tvshows/create", controllers.TvShowCreate)
+	r.PUT("/tvshows/:id", controllers.TvShowEdit)
+	r.DELETE("/tvshows/:id", controllers.TvShowDelete)
 	// truncate
 
 	// Episodes

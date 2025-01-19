@@ -3,17 +3,18 @@ package models
 import (
 	"errors"
 	"reflect"
+	"time"
 
 	"gopkg.in/validator.v2"
-	"gorm.io/gorm"
 )
 
 type TvShow struct {
-	gorm.Model
-	Name      string `json:"name" validate:"min=2,max=80"`
-	GroupType int    `json:"group" validate:"checkGroup"`
-	Status    int    `json:"status" validate:"checkStatus"`
-	TmdbId    int    `json:"tmdb_id" validate:"nonzero"`
+	TmdbId    int       `json:"tmdb_id" gorm:"primaryKey" validate:"nonzero"`
+	Name      string    `json:"name" gorm:"unique" validate:"min=2,max=80"`
+	GroupType int       `json:"group" validate:"checkGroup"`
+	Status    int       `json:"status" validate:"checkStatus"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // Validator
