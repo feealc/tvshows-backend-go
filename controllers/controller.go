@@ -9,13 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetTvShows(c *gin.Context) {
+func TvShowListAll(c *gin.Context) {
 	var tvShows []models.TvShow
 	database.DB.Order("name").Find(&tvShows)
 	c.JSON(http.StatusOK, tvShows)
 }
 
-func GetTvShowId(c *gin.Context) {
+func TvShowListById(c *gin.Context) {
 	var tvShow models.TvShow
 	id := c.Params.ByName("id")
 	database.DB.First(&tvShow, id)
@@ -30,7 +30,7 @@ func GetTvShowId(c *gin.Context) {
 	c.JSON(http.StatusOK, tvShow)
 }
 
-func CreateTvShow(c *gin.Context) {
+func TvShowCreate(c *gin.Context) {
 	var tvShow models.TvShow
 
 	if err := c.ShouldBindJSON(&tvShow); err != nil {
@@ -51,7 +51,7 @@ func CreateTvShow(c *gin.Context) {
 	c.JSON(http.StatusCreated, tvShow)
 }
 
-func EditTvShow(c *gin.Context) {
+func TvShowEdit(c *gin.Context) {
 	var tvShow models.TvShow
 	id := c.Params.ByName("id")
 	database.DB.First(&tvShow, id)
@@ -81,7 +81,7 @@ func EditTvShow(c *gin.Context) {
 	c.JSON(http.StatusOK, tvShow)
 }
 
-func DeleteTvShow(c *gin.Context) {
+func TvShowDelete(c *gin.Context) {
 	var tvShow models.TvShow
 	id := c.Params.ByName("id")
 	database.DB.First(&tvShow, id)
