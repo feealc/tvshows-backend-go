@@ -35,13 +35,15 @@ func CreateTvShow(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&tvShow); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error()})
+			"error": err.Error(),
+		})
 		return
 	}
 
 	if err := models.ValidTvShow(&tvShow); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error()})
+			"error": err.Error(),
+		})
 		return
 	}
 
@@ -63,13 +65,15 @@ func EditTvShow(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&tvShow); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error()})
+			"error": err.Error(),
+		})
 		return
 	}
 
 	if err := models.ValidTvShow(&tvShow); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error()})
+			"error": err.Error(),
+		})
 		return
 	}
 
@@ -90,7 +94,9 @@ func DeleteTvShow(c *gin.Context) {
 	}
 
 	database.DB.Delete(&tvShow, id)
-	c.JSON(http.StatusOK, gin.H{"message": "TvShow deleted successfully"})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "TvShow deleted successfully",
+	})
 }
 
 //
@@ -106,13 +112,15 @@ func EpisodeCreate(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&episode); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error()})
+			"error": err.Error(),
+		})
 		return
 	}
 
 	if err := models.ValidEpisode(&episode); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error()})
+			"error": err.Error(),
+		})
 		return
 	}
 
@@ -128,7 +136,8 @@ func EpisodeCreate(c *gin.Context) {
 
 	if ret := database.DB.Create(&episode); ret.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": ret.Error.Error()})
+			"error": ret.Error.Error(),
+		})
 		return
 	}
 	c.JSON(http.StatusCreated, episode)
@@ -185,7 +194,8 @@ func EpisodeCreateBatch(c *gin.Context) {
 func EpisodeTruncate(c *gin.Context) {
 	if ret := database.DB.Where("tmdb_id is not null").Delete(&models.Episode{}); ret.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": ret.Error.Error()})
+			"error": ret.Error.Error(),
+		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
