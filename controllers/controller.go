@@ -20,7 +20,7 @@ func GetTvShowId(c *gin.Context) {
 	id := c.Params.ByName("id")
 	database.DB.First(&tvShow, id)
 
-	if tvShow.ID == 0 {
+	if tvShow.TmdbId == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "TvShow not found",
 		})
@@ -54,7 +54,7 @@ func EditTvShow(c *gin.Context) {
 	id := c.Params.ByName("id")
 	database.DB.First(&tvShow, id)
 
-	if tvShow.ID == 0 {
+	if tvShow.TmdbId == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "TvShow not found",
 		})
@@ -82,7 +82,7 @@ func DeleteTvShow(c *gin.Context) {
 	id := c.Params.ByName("id")
 	database.DB.First(&tvShow, id)
 
-	if tvShow.ID == 0 {
+	if tvShow.TmdbId == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "TvShow not found",
 		})
@@ -97,7 +97,7 @@ func DeleteTvShow(c *gin.Context) {
 
 func EpisodeListAll(c *gin.Context) {
 	var episodes []models.Episode
-	database.DB.Order("tv_show_id, season, episode").Find(&episodes)
+	database.DB.Order("tmdb_id, season, episode").Find(&episodes)
 	c.JSON(http.StatusOK, episodes)
 }
 
@@ -117,9 +117,9 @@ func EpisodeCreate(c *gin.Context) {
 	}
 
 	var tvShow models.TvShow
-	database.DB.First(&tvShow, episode.TvShowId)
+	database.DB.First(&tvShow, episode.TmdbId)
 
-	if tvShow.ID == 0 {
+	if tvShow.TmdbId == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "TvShow not found",
 		})
@@ -153,17 +153,17 @@ func EpisodeCreateBatch(c *gin.Context) {
 		}
 
 		var tvShow models.TvShow
-		database.DB.First(&tvShow, episode.TvShowId)
+		database.DB.First(&tvShow, episode.TmdbId)
 
-		if tvShow.ID == 0 {
+		if tvShow.TmdbId == 0 {
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": fmt.Sprintf("TvShow %d not found", episode.TvShowId),
+				"error": fmt.Sprintf("TvShow %d not found", episode.TmdbId),
 			})
 			return
 		}
 
 		var episodeExist models.Episode
-		rows := database.DB.Where(&models.Episode{TvShowId: episode.TvShowId, Season: episode.Season, Episode: episode.Episode}).First(&episodeExist).RowsAffected
+		rows := database.DB.Where(&models.Episode{TmdbId: episode.TmdbId, Season: episode.Season, Episode: episode.Episode}).First(&episodeExist).RowsAffected
 
 		if rows > 0 {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -183,7 +183,7 @@ func EpisodeCreateBatch(c *gin.Context) {
 }
 
 func EpisodeTruncate(c *gin.Context) {
-	if ret := database.DB.Where("tv_show_id is not null").Delete(&models.Episode{}); ret.Error != nil {
+	if ret := database.DB.Where("tmdb_id is not null").Delete(&models.Episode{}); ret.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": ret.Error.Error()})
 		return

@@ -10,7 +10,7 @@ import (
 )
 
 type Episode struct {
-	TvShowId    int       `json:"tvshow_id" gorm:"primaryKey" validate:"nonzero"`
+	TmdbId      int       `json:"tmdb_id" gorm:"primaryKey" validate:"nonzero"`
 	Season      int       `json:"season" gorm:"primaryKey" validate:"nonzero"`
 	Episode     int       `json:"episode" gorm:"primaryKey" validate:"nonzero"`
 	Name        string    `json:"name" validate:"min=2,max=80"`
