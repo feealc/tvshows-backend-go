@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/feealc/tvshows-backend-go/database"
@@ -131,6 +132,54 @@ func EpisodeCreate(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, episode)
+}
+
+func EpisodeCreateBatch(c *gin.Context) {
+	var episodes []models.Episode
+
+	if err := c.ShouldBindJSON(&episodes); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	for _, episode := range episodes {
+		if err := models.ValidEpisode(&episode); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		var tvShow models.TvShow
+		database.DB.First(&tvShow, episode.TvShowId)
+
+		if tvShow.ID == 0 {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": fmt.Sprintf("TvShow %d not found", episode.TvShowId),
+			})
+			return
+		}
+
+		var episodeExist models.Episode
+		rows := database.DB.Where(&models.Episode{TvShowId: episode.TvShowId, Season: episode.Season, Episode: episode.Episode}).First(&episodeExist).RowsAffected
+
+		if rows > 0 {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": fmt.Sprintf("Episode %dx%02d already exist", episode.Season, episode.Episode),
+			})
+			return
+		}
+	}
+
+	if result := database.DB.Create(&episodes); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": result.Error.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusCreated, episodes)
 }
 
 func EpisodeTruncate(c *gin.Context) {

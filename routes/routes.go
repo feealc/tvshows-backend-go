@@ -21,7 +21,7 @@ func HandleRequests() {
 	// get tv show by id
 	// get tv show by id e season
 	r.POST("/episodes/create", controllers.EpisodeCreate)
-	// post batch create (slice)
+	r.POST("/episodes/create/batch", controllers.EpisodeCreateBatch)
 	// put watch episode (set watched date to now)
 	r.DELETE("/episodes/truncate", controllers.EpisodeTruncate)
 
