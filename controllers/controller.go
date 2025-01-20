@@ -51,6 +51,44 @@ func TvShowCreate(c *gin.Context) {
 	c.JSON(http.StatusCreated, tvShow)
 }
 
+func TvShowCreateBatch(c *gin.Context) {
+	var tvShows []models.TvShow
+
+	if err := c.ShouldBindJSON(&tvShows); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	for _, tvShow := range tvShows {
+		if err := models.ValidTvShow(&tvShow); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		var tvShowExist models.TvShow
+		database.DB.First(&tvShowExist, tvShow.TmdbId)
+
+		if tvShowExist.TmdbId > 0 {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": fmt.Sprintf("TvShow %s (TMDB ID %d) already exist", tvShow.Name, tvShow.TmdbId),
+			})
+			return
+		}
+	}
+
+	if result := database.DB.Create(&tvShows); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": result.Error.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusCreated, tvShows)
+}
+
 func TvShowEdit(c *gin.Context) {
 	var tvShow models.TvShow
 	id := c.Params.ByName("id")
@@ -96,6 +134,18 @@ func TvShowDelete(c *gin.Context) {
 	database.DB.Delete(&tvShow, id)
 	c.JSON(http.StatusOK, gin.H{
 		"message": "TvShow deleted successfully",
+	})
+}
+
+func TvShowTruncate(c *gin.Context) {
+	if result := database.DB.Where("tmdb_id is not null").Delete(&models.TvShow{}); result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": result.Error.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "TvShows truncated",
 	})
 }
 
@@ -192,9 +242,9 @@ func EpisodeCreateBatch(c *gin.Context) {
 }
 
 func EpisodeTruncate(c *gin.Context) {
-	if ret := database.DB.Where("tmdb_id is not null").Delete(&models.Episode{}); ret.Error != nil {
+	if result := database.DB.Where("tmdb_id is not null").Delete(&models.Episode{}); result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": ret.Error.Error(),
+			"error": result.Error.Error(),
 		})
 		return
 	}
