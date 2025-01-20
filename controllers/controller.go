@@ -3,10 +3,15 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/feealc/tvshows-backend-go/database"
 	"github.com/feealc/tvshows-backend-go/models"
 	"github.com/gin-gonic/gin"
+)
+
+const (
+	kEPISODE_ORDER_BY_TMDBID_SEASON_EPISODE = "tmdb_id, season, episode"
 )
 
 func TvShowListAll(c *gin.Context) {
@@ -154,6 +159,51 @@ func TvShowTruncate(c *gin.Context) {
 func EpisodeListAll(c *gin.Context) {
 	var episodes []models.Episode
 	database.DB.Order("tmdb_id, season, episode").Find(&episodes)
+	c.JSON(http.StatusOK, episodes)
+}
+
+func EpisodeListByTmdbId(c *gin.Context) {
+	var tvShowExist models.TvShow
+	tmdbId := c.Params.ByName("tmdbid")
+	database.DB.First(&tvShowExist, tmdbId)
+
+	if tvShowExist.TmdbId == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "TvShow not found",
+		})
+		return
+	}
+
+	var episodes []models.Episode
+	database.DB.Where(&models.Episode{TmdbId: tvShowExist.TmdbId}).Order(kEPISODE_ORDER_BY_TMDBID_SEASON_EPISODE).Find(&episodes)
+
+	c.JSON(http.StatusOK, episodes)
+}
+
+func EpisodeListByTmdbIdAndSeason(c *gin.Context) {
+	var tvShowExist models.TvShow
+	tmdbId := c.Params.ByName("tmdbid")
+	season := c.Params.ByName("season")
+	database.DB.First(&tvShowExist, tmdbId)
+
+	if tvShowExist.TmdbId == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "TvShow not found",
+		})
+		return
+	}
+
+	seasonInt, err := strconv.Atoi(season)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "season invalid",
+		})
+		return
+	}
+
+	var episodes []models.Episode
+	database.DB.Where(&models.Episode{TmdbId: tvShowExist.TmdbId, Season: seasonInt}).Order(kEPISODE_ORDER_BY_TMDBID_SEASON_EPISODE).Find(&episodes)
+
 	c.JSON(http.StatusOK, episodes)
 }
 

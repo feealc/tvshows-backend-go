@@ -19,8 +19,8 @@ func HandleRequests() {
 
 	// Episodes
 	r.GET("/episodes", controllers.EpisodeListAll)
-	// get tv show by id
-	// get tv show by id e season
+	r.GET("/episodes/:tmdbid", controllers.EpisodeListByTmdbId)
+	r.GET("/episodes/:tmdbid/:season", controllers.EpisodeListByTmdbIdAndSeason)
 	r.POST("/episodes/create", controllers.EpisodeCreate)
 	r.POST("/episodes/create/batch", controllers.EpisodeCreateBatch)
 	// put watch episode (set watched date to now)
