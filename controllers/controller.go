@@ -3,10 +3,16 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/feealc/tvshows-backend-go/database"
 	"github.com/feealc/tvshows-backend-go/models"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+)
+
+const (
+	kEPISODE_ORDER_BY_TMDBID_SEASON_EPISODE = "tmdb_id, season, episode"
 )
 
 func TvShowListAll(c *gin.Context) {
@@ -153,7 +159,52 @@ func TvShowTruncate(c *gin.Context) {
 
 func EpisodeListAll(c *gin.Context) {
 	var episodes []models.Episode
-	database.DB.Order("tmdb_id, season, episode").Find(&episodes)
+	database.DB.Order(kEPISODE_ORDER_BY_TMDBID_SEASON_EPISODE).Find(&episodes)
+	c.JSON(http.StatusOK, episodes)
+}
+
+func EpisodeListByTmdbId(c *gin.Context) {
+	var tvShowExist models.TvShow
+	tmdbId := c.Params.ByName("tmdbid")
+	database.DB.First(&tvShowExist, tmdbId)
+
+	if tvShowExist.TmdbId == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "TvShow not found",
+		})
+		return
+	}
+
+	var episodes []models.Episode
+	database.DB.Where(&models.Episode{TmdbId: tvShowExist.TmdbId}).Order(kEPISODE_ORDER_BY_TMDBID_SEASON_EPISODE).Find(&episodes)
+
+	c.JSON(http.StatusOK, episodes)
+}
+
+func EpisodeListByTmdbIdAndSeason(c *gin.Context) {
+	var tvShowExist models.TvShow
+	tmdbId := c.Params.ByName("tmdbid")
+	season := c.Params.ByName("season")
+	database.DB.First(&tvShowExist, tmdbId)
+
+	if tvShowExist.TmdbId == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "TvShow not found",
+		})
+		return
+	}
+
+	seasonInt, err := strconv.Atoi(season)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "season invalid",
+		})
+		return
+	}
+
+	var episodes []models.Episode
+	database.DB.Where(&models.Episode{TmdbId: tvShowExist.TmdbId, Season: seasonInt}).Order(kEPISODE_ORDER_BY_TMDBID_SEASON_EPISODE).Find(&episodes)
+
 	c.JSON(http.StatusOK, episodes)
 }
 
@@ -226,7 +277,7 @@ func EpisodeCreateBatch(c *gin.Context) {
 
 		if rows > 0 {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": fmt.Sprintf("Episode %dx%02d already exist", episode.Season, episode.Episode),
+				"error": fmt.Sprintf("Episode %dx%02d already exist for %s", episode.Season, episode.Episode, tvShow.Name),
 			})
 			return
 		}
@@ -239,6 +290,71 @@ func EpisodeCreateBatch(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, episodes)
+}
+
+func EpisodeDelete(c *gin.Context) {
+	paramTmdbId := c.Params.ByName("tmdbid")
+	paramSeason := c.Params.ByName("season")
+	paramEpisode := c.Params.ByName("episode")
+
+	var err error
+	var tmdbId, season, episode int
+
+	tmdbId, err = strconv.Atoi(paramTmdbId)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "tmdbId invalid",
+		})
+		return
+	}
+
+	if paramSeason != "" {
+		season, err = strconv.Atoi(paramSeason)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "season invalid",
+			})
+			return
+		}
+	}
+
+	if paramEpisode != "" {
+		episode, err = strconv.Atoi(paramEpisode)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "episode invalid",
+			})
+			return
+		}
+	}
+
+	var result *gorm.DB
+	if paramTmdbId != "" && paramSeason == "" && paramEpisode == "" {
+		result = database.DB.Where(&models.Episode{TmdbId: tmdbId}).Delete(&models.Episode{})
+	} else if paramTmdbId != "" && paramSeason != "" && paramEpisode == "" {
+		result = database.DB.Where(&models.Episode{TmdbId: tmdbId, Season: season}).Delete(&models.Episode{})
+	} else if paramTmdbId != "" && paramSeason != "" && paramEpisode != "" {
+		result = database.DB.Where(&models.Episode{TmdbId: tmdbId, Season: season, Episode: episode}).Delete(&models.Episode{})
+	}
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": result.Error.Error(),
+		})
+		return
+	}
+
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "Episodes not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Episodes deleted",
+		"rows":    result.RowsAffected,
+	})
 }
 
 func EpisodeTruncate(c *gin.Context) {
