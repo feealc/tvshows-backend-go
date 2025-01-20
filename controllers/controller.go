@@ -158,7 +158,7 @@ func TvShowTruncate(c *gin.Context) {
 
 func EpisodeListAll(c *gin.Context) {
 	var episodes []models.Episode
-	database.DB.Order("tmdb_id, season, episode").Find(&episodes)
+	database.DB.Order(kEPISODE_ORDER_BY_TMDBID_SEASON_EPISODE).Find(&episodes)
 	c.JSON(http.StatusOK, episodes)
 }
 
@@ -276,7 +276,7 @@ func EpisodeCreateBatch(c *gin.Context) {
 
 		if rows > 0 {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": fmt.Sprintf("Episode %dx%02d already exist", episode.Season, episode.Episode),
+				"error": fmt.Sprintf("Episode %dx%02d already exist for %s", episode.Season, episode.Episode, tvShow.Name),
 			})
 			return
 		}
