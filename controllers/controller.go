@@ -8,6 +8,7 @@ import (
 	"github.com/feealc/tvshows-backend-go/database"
 	"github.com/feealc/tvshows-backend-go/models"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 const (
@@ -289,6 +290,71 @@ func EpisodeCreateBatch(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, episodes)
+}
+
+func EpisodeDelete(c *gin.Context) {
+	paramTmdbId := c.Params.ByName("tmdbid")
+	paramSeason := c.Params.ByName("season")
+	paramEpisode := c.Params.ByName("episode")
+
+	var err error
+	var tmdbId, season, episode int
+
+	tmdbId, err = strconv.Atoi(paramTmdbId)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "tmdbId invalid",
+		})
+		return
+	}
+
+	if paramSeason != "" {
+		season, err = strconv.Atoi(paramSeason)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "season invalid",
+			})
+			return
+		}
+	}
+
+	if paramEpisode != "" {
+		episode, err = strconv.Atoi(paramEpisode)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "episode invalid",
+			})
+			return
+		}
+	}
+
+	var result *gorm.DB
+	if paramTmdbId != "" && paramSeason == "" && paramEpisode == "" {
+		result = database.DB.Where(&models.Episode{TmdbId: tmdbId}).Delete(&models.Episode{})
+	} else if paramTmdbId != "" && paramSeason != "" && paramEpisode == "" {
+		result = database.DB.Where(&models.Episode{TmdbId: tmdbId, Season: season}).Delete(&models.Episode{})
+	} else if paramTmdbId != "" && paramSeason != "" && paramEpisode != "" {
+		result = database.DB.Where(&models.Episode{TmdbId: tmdbId, Season: season, Episode: episode}).Delete(&models.Episode{})
+	}
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": result.Error.Error(),
+		})
+		return
+	}
+
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "Episodes not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Episodes deleted",
+		"rows":    result.RowsAffected,
+	})
 }
 
 func EpisodeTruncate(c *gin.Context) {
