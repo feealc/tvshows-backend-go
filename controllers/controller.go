@@ -242,9 +242,9 @@ func EpisodeCreateBatch(c *gin.Context) {
 }
 
 func EpisodeTruncate(c *gin.Context) {
-	if ret := database.DB.Where("tmdb_id is not null").Delete(&models.Episode{}); ret.Error != nil {
+	if result := database.DB.Where("tmdb_id is not null").Delete(&models.Episode{}); result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": ret.Error.Error(),
+			"error": result.Error.Error(),
 		})
 		return
 	}
