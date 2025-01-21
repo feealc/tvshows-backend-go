@@ -23,6 +23,7 @@ func HandleRequests() {
 	r.GET("/episodes/:tmdbid/:season", controllers.EpisodeListByTmdbIdAndSeason)
 	r.POST("/episodes/create", controllers.EpisodeCreate)
 	r.POST("/episodes/create/batch", controllers.EpisodeCreateBatch)
+	r.PUT("/episodes/:tmdbid/:season/:episode", controllers.EpisodeEdit)
 	// put watch episode (set watched date to now)
 	r.DELETE("/episodes/:tmdbid", controllers.EpisodeDelete)
 	r.DELETE("/episodes/:tmdbid/:season", controllers.EpisodeDelete)

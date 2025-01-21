@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/feealc/tvshows-backend-go/database"
+	"github.com/feealc/tvshows-backend-go/generic"
 	"github.com/feealc/tvshows-backend-go/models"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -290,6 +291,58 @@ func EpisodeCreateBatch(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, episodes)
+}
+
+func EpisodeEdit(c *gin.Context) {
+	paramTmdbId := c.Params.ByName("tmdbid")
+	paramSeason := c.Params.ByName("season")
+	paramEpisode := c.Params.ByName("episode")
+
+	err := generic.CheckParamsInt(paramTmdbId, paramSeason, paramEpisode)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	tmdbId, _ := strconv.Atoi(paramTmdbId)
+	season, _ := strconv.Atoi(paramSeason)
+	episode, _ := strconv.Atoi(paramEpisode)
+
+	var episodeUpdate models.Episode
+	result := database.DB.Where(&models.Episode{TmdbId: tmdbId, Season: season, Episode: episode}).First(&episodeUpdate)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": result.Error.Error(),
+		})
+		return
+	}
+
+	if episodeUpdate.TmdbId == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Episode not found",
+		})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&episodeUpdate); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if err := models.ValidEpisode(&episodeUpdate); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	database.DB.Save(&episodeUpdate)
+	c.JSON(http.StatusOK, episodeUpdate)
 }
 
 func EpisodeDelete(c *gin.Context) {
