@@ -3,6 +3,7 @@ package generic
 import (
 	"errors"
 	"strconv"
+	"time"
 )
 
 func CheckParamsInt(paramTmdbId, paramSeason, paramEpisode string) error {
@@ -28,4 +29,9 @@ func CheckParamsInt(paramTmdbId, paramSeason, paramEpisode string) error {
 	}
 
 	return nil
+}
+
+func GetCurrentDate() int {
+	dateInt, _ := strconv.Atoi(time.Now().Format("20060102"))
+	return dateInt
 }
