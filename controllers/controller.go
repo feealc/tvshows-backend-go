@@ -209,6 +209,54 @@ func EpisodeListByTmdbIdAndSeason(c *gin.Context) {
 	c.JSON(http.StatusOK, episodes)
 }
 
+func EpisodeSummaryBySeason(c *gin.Context) {
+	paramTmdbId := c.Params.ByName("tmdbid")
+
+	err := generic.CheckParamsInt(paramTmdbId, "", "")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	var tvShowExist models.TvShow
+	database.DB.First(&tvShowExist, paramTmdbId)
+
+	if tvShowExist.TmdbId == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "TvShow not found",
+		})
+		return
+	}
+
+	var maxSeason int
+	database.DB.Model(&models.Episode{}).Select("max(season)").Group("tmdb_id").Where(&models.Episode{TmdbId: tvShowExist.TmdbId}).First(&maxSeason)
+	// fmt.Printf("max season [%d]\n", maxSeason)
+
+	type SeasonSummary struct {
+		Season               int `json:"season"`
+		TotalEpisodes        int `json:"total_episodes"`
+		TotalEpisodesWatched int `json:"total_episodes_watched"`
+	}
+
+	var responseSummary []SeasonSummary
+	var totalEpisodes, totalEpisodesWatched int
+	for i := 1; i <= maxSeason; i++ {
+		// fmt.Printf("season %d \n", i)
+
+		database.DB.Model(&models.Episode{}).Select("count(*)").Group("tmdb_id").Where(&models.Episode{TmdbId: tvShowExist.TmdbId, Season: i}).First(&totalEpisodes)
+		// fmt.Printf("total episodes %d \n", totalEpisodes)
+
+		database.DB.Model(&models.Episode{}).Select("count(*)").Group("tmdb_id").Where(&models.Episode{TmdbId: tvShowExist.TmdbId, Season: i, Watched: true}).First(&totalEpisodesWatched)
+		// fmt.Printf("total episodes watched %d \n", totalEpisodesWatched)
+
+		responseSummary = append(responseSummary, SeasonSummary{Season: i, TotalEpisodes: totalEpisodes, TotalEpisodesWatched: totalEpisodesWatched})
+	}
+
+	c.JSON(http.StatusOK, responseSummary)
+}
+
 func EpisodeCreate(c *gin.Context) {
 	var episode models.Episode
 
