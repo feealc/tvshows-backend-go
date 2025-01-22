@@ -21,6 +21,7 @@ func HandleRequests() {
 	r.GET("/episodes", controllers.EpisodeListAll)
 	r.GET("/episodes/:tmdbid", controllers.EpisodeListByTmdbId)
 	r.GET("/episodes/:tmdbid/:season", controllers.EpisodeListByTmdbIdAndSeason)
+	r.GET("/episodes/:tmdbid/summary", controllers.EpisodeSummaryBySeason)
 	r.POST("/episodes/create", controllers.EpisodeCreate)
 	r.POST("/episodes/create/batch", controllers.EpisodeCreateBatch)
 	r.PUT("/episodes/:tmdbid/:season/:episode", controllers.EpisodeEdit)
