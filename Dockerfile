@@ -12,4 +12,5 @@ ENV DB_USER="root"
 ENV DB_PASS="root"
 ENV DB_NAME="root"
 ENV GIN_MODE="release"
+EXPOSE 8080
 ENTRYPOINT [ "/main" ]
