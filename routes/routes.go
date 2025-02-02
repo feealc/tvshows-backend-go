@@ -32,5 +32,5 @@ func HandleRequests() {
 	r.DELETE("/episodes/:tmdbid/:season/:episode", controllers.EpisodeDelete)
 	r.DELETE("/episodes/truncate", controllers.EpisodeTruncate)
 
-	r.Run()
+	r.Run(":8080")
 }
