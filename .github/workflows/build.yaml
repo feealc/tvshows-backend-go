@@ -21,26 +21,11 @@ jobs:
         - name: 'Set up Cloud SDK'
           uses: 'google-github-actions/setup-gcloud@v2'
 
-        # - name: install gcloud cli
-        #   uses: google-github-actions/setup-gcloud@v2
-        #   with:
-        #     project_id: ${{ secrets.GOOGLE_PROJECT }}
-        #     service_account_key: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-        #     export_default_credentials: true
+        - name: Docker auth
+          run: gcloud auth configure-docker southamerica-east1-docker.pkg.dev --quiet
 
-      - name: Docker auth
-        run: gcloud auth configure-docker southamerica-east1-docker.pkg.dev --quiet
+        - name: Build image
+          run: docker build -t southamerica-east1-docker.pkg.dev/$GOOGLE_PROJECT/tv-shows-backend/tv-shows-backend-go:latest .
 
-      - name: Build image
-        run: docker build -t southamerica-east1-docker.pkg.dev/$GOOGLE_PROJECT/tv-shows-backend/tv-shows-backend-go:latest .
-
-      - name: Push image
-        run: docker push southamerica-east1-docker.pkg.dev/$GOOGLE_PROJECT/tv-shows-backend/tv-shows-backend-go:latest
-
-        # - name: build and push docker image
-        #   env:
-        #     GOOGLE_PROJECT: ${{ secrets.GOOGLE_PROJECT }}
-        #   run:
-        #     gcloud auth configure-docker southamerica-east1-docker.pkg.dev --quiet
-        #     docker build -t southamerica-east1-docker.pkg.dev/$GOOGLE_PROJECT/tv-shows-backend/tv-shows-backend-go:latest .
-        #     docker push southamerica-east1-docker.pkg.dev/$GOOGLE_PROJECT/tv-shows-backend/tv-shows-backend-go:latest
+        - name: Push image
+          run: docker push southamerica-east1-docker.pkg.dev/$GOOGLE_PROJECT/tv-shows-backend/tv-shows-backend-go:latest
