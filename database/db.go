@@ -74,7 +74,8 @@ func buildConnectionString() string {
 		DB_HOST = DB_HOST_ENV
 	}
 
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+	// dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s",
 		DB_HOST,
 		DB_USER,
 		DB_PASS,
