@@ -1,4 +1,4 @@
-name: Deploy
+name: Build and Push to Artifact Registry
 
 on:
     push:
@@ -6,7 +6,7 @@ on:
           - feature/github-actions-gcloud
 
 jobs:
-    deploy:
+    build-push-artifact:
         runs-on: ubuntu-latest
         steps:
 
