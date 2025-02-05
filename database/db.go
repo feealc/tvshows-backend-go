@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 
-	"cloud.google.com/go/cloudsqlconn/postgres/pgxv5"
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 	"github.com/feealc/tvshows-backend-go/models"
 	"gorm.io/driver/postgres"
@@ -29,17 +28,21 @@ func ConnectDataBase() {
 	dsn := buildConnectionString()
 
 	if os.Getenv("CLOUD_NAME") == CLOUD_NAME {
-		cleanup, err2 := pgxv5.RegisterDriver("cloudsql-postgres")
-		if err2 != nil {
-			panic(err2)
-		}
+		// cleanup, err2 := pgxv5.RegisterDriver("cloudsql-postgres")
+		// if err2 != nil {
+		// 	panic(err2)
+		// }
 		// cleanup will stop the driver from retrieving ephemeral certificates
 		// Don't call cleanup until you're done with your database connections
-		defer cleanup()
+		// defer cleanup()
 
 		log.Println("Connecting to Cloud SQL database")
+		// DB, err = gorm.Open(postgres.New(postgres.Config{
+		// 	DriverName: "cloudsql-postgres",
+		// 	DSN:        dsn,
+		// }))
 		DB, err = gorm.Open(postgres.New(postgres.Config{
-			DriverName: "cloudsql-postgres",
+			DriverName: "cloudsqlpostgres",
 			DSN:        dsn,
 		}))
 	} else {
