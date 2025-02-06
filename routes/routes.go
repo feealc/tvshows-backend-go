@@ -8,6 +8,9 @@ import (
 func HandleRequests() {
 	r := gin.Default()
 
+	// Health
+	r.GET("/health", controllers.Health)
+
 	// TvShows
 	r.GET("/tvshows", controllers.TvShowListAll)
 	r.GET("/tvshows/:id", controllers.TvShowListById)

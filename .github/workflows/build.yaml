@@ -1,17 +1,17 @@
-name: Deploy
+name: Build and Push to Artifact Registry
 
 on:
     push:
         branches:
-          - main
+          - feature/google-cloud
 
 jobs:
-    deploy:
+    build-push-artifact:
         runs-on: ubuntu-latest
         steps:
 
-        - name: code checkout
-          uses: actions/checkout@v2
+        - name: Checkout
+          uses: actions/checkout@v4
 
         - name: Authenticate Google Cloud
           uses: 'google-github-actions/auth@v2'
@@ -21,11 +21,11 @@ jobs:
         - name: 'Set up Cloud SDK'
           uses: 'google-github-actions/setup-gcloud@v2'
 
-        - name: Docker auth
+        - name: Docker Auth
           run: gcloud auth configure-docker southamerica-east1-docker.pkg.dev --quiet
 
-        - name: Build image
+        - name: Build Image
           run: docker build -t southamerica-east1-docker.pkg.dev/tvshows-449001/tv-shows-backend/tv-shows-backend-go:latest .
 
-        - name: Push image
+        - name: Push Image
           run: docker push southamerica-east1-docker.pkg.dev/tvshows-449001/tv-shows-backend/tv-shows-backend-go:latest

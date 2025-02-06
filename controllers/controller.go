@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/feealc/tvshows-backend-go/database"
 	"github.com/feealc/tvshows-backend-go/generic"
@@ -15,6 +16,13 @@ import (
 const (
 	kEPISODE_ORDER_BY_TMDBID_SEASON_EPISODE = "tmdb_id, season, episode"
 )
+
+func Health(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"message":   "Ok",
+		"date_time": time.Now().String(),
+	})
+}
 
 func TvShowListAll(c *gin.Context) {
 	var tvShows []models.TvShow
