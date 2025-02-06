@@ -131,3 +131,26 @@ func ConnectUnixSocket() (*sql.DB, error, string) {
 
 	return dbPool, nil, dsn
 }
+
+func ConnectDataBaseFinal() {
+	sqlDB, err2, dsn := ConnectUnixSocket()
+	if err2 != nil {
+		log.Println(err2.Error())
+		log.Printf("dsn [%s]", dsn)
+		log.Panic("Erro ao conectar com banco de dados usando ConnectUnixSocket")
+		return
+	}
+
+	DB, err = gorm.Open(postgres.New(postgres.Config{
+		Conn: sqlDB,
+	}), &gorm.Config{})
+
+	if err != nil {
+		log.Println(err.Error())
+		log.Printf("dsn [%s]", dsn)
+		log.Panic("Erro ao conectar com banco de dados usando sqlDB e GORM")
+		return
+	}
+
+	log.Println("Conectado com sucesso usando ConnectUnixSocket e GORM")
+}
