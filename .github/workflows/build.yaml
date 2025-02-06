@@ -29,3 +29,15 @@ jobs:
 
         - name: Push Image
           run: docker push southamerica-east1-docker.pkg.dev/tvshows-449001/tv-shows-backend/tv-shows-backend-go:latest
+
+        - name: Deploy Image
+          run: |
+            gcloud run deploy tv-shows-backend-go \
+            --image southamerica-east1-docker.pkg.dev/tvshows-449001/tv-shows-backend/tv-shows-backend-go:latest \
+            --region southamerica-east1 \
+            --min-instances 0 \
+            --max-instances 1 \
+            --platform managed \
+            --port 8080 \
+            --allow-unauthenticated \
+            --set-cloudsql-instances tvshows-449001:southamerica-east1:tvshows-database-sandbox
