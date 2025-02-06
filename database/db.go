@@ -152,5 +152,8 @@ func ConnectDataBaseFinal() {
 		return
 	}
 
+	DB.AutoMigrate(&models.TvShow{})
+	DB.AutoMigrate(&models.Episode{})
+
 	log.Println("Conectado com sucesso usando ConnectUnixSocket e GORM")
 }
