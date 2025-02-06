@@ -1,12 +1,20 @@
 package routes
 
 import (
+	"net/http"
+
 	"github.com/feealc/tvshows-backend-go/controllers"
 	"github.com/gin-gonic/gin"
 )
 
 func HandleRequests() {
 	r := gin.Default()
+
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Ok",
+		})
+	})
 
 	// TvShows
 	r.GET("/tvshows", controllers.TvShowListAll)
