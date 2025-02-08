@@ -3,7 +3,6 @@ package controllers
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/feealc/tvshows-backend-go/database"
 	"github.com/feealc/tvshows-backend-go/generic"
@@ -14,51 +13,76 @@ import (
 
 func EpisodeListAll(c *gin.Context) {
 	var episodes []models.Episode
-	database.DB.Order(kEPISODE_ORDER_BY_TMDBID_SEASON_EPISODE).Find(&episodes)
+
+	if result := database.DB.Order(kEPISODE_ORDER_BY_TMDBID_SEASON_EPISODE).Find(&episodes); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
+		return
+	}
+
 	c.JSON(http.StatusOK, episodes)
 }
 
 func EpisodeListByTmdbId(c *gin.Context) {
 	var tvShowExist models.TvShow
-	tmdbId := c.Params.ByName("tmdbid")
-	database.DB.First(&tvShowExist, tmdbId)
+	paramTmdbId := c.Params.ByName("tmdbid")
 
-	if tvShowExist.TmdbId == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "TvShow not found",
-		})
+	tmdbId, err := generic.CheckParamInt(paramTmdbId, kERROR_MESSAGE_TMDBID)
+	if err != nil {
+		ResponseError(c, err, 0)
+		return
+	}
+
+	if result := database.DB.First(&tvShowExist, tmdbId); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
+		return
+	}
+
+	if tvShowExist.Id == 0 {
+		ResponseErrorNotFound(c, models.TvShow{})
 		return
 	}
 
 	var episodes []models.Episode
-	database.DB.Where(&models.Episode{TmdbId: tvShowExist.TmdbId}).Order(kEPISODE_ORDER_BY_TMDBID_SEASON_EPISODE).Find(&episodes)
+	if result := database.DB.Where(&models.Episode{TmdbId: tvShowExist.TmdbId}).Order(kEPISODE_ORDER_BY_TMDBID_SEASON_EPISODE).Find(&episodes); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
+		return
+	}
 
 	c.JSON(http.StatusOK, episodes)
 }
 
 func EpisodeListByTmdbIdAndSeason(c *gin.Context) {
 	var tvShowExist models.TvShow
-	tmdbId := c.Params.ByName("tmdbid")
-	season := c.Params.ByName("season")
-	database.DB.First(&tvShowExist, tmdbId)
+	paramTmdbId := c.Params.ByName("tmdbid")
+	paramSeason := c.Params.ByName("season")
 
-	if tvShowExist.TmdbId == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "TvShow not found",
-		})
+	tmdbId, err := generic.CheckParamInt(paramTmdbId, kERROR_MESSAGE_TMDBID)
+	if err != nil {
+		ResponseErrorBadRequest(c, err)
 		return
 	}
 
-	seasonInt, err := strconv.Atoi(season)
+	season, err := generic.CheckParamInt(paramSeason, kERROR_MESSAGE_SEASON)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "season invalid",
-		})
+		ResponseErrorBadRequest(c, err)
+		return
+	}
+
+	if result := database.DB.First(&tvShowExist, tmdbId); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
+		return
+	}
+
+	if tvShowExist.Id == 0 {
+		ResponseErrorNotFound(c, models.TvShow{})
 		return
 	}
 
 	var episodes []models.Episode
-	database.DB.Where(&models.Episode{TmdbId: tvShowExist.TmdbId, Season: seasonInt}).Order(kEPISODE_ORDER_BY_TMDBID_SEASON_EPISODE).Find(&episodes)
+	if result := database.DB.Where(&models.Episode{TmdbId: tvShowExist.TmdbId, Season: season}).Order(kEPISODE_ORDER_BY_TMDBID_SEASON_EPISODE).Find(&episodes); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
+		return
+	}
 
 	c.JSON(http.StatusOK, episodes)
 }
@@ -68,24 +92,26 @@ func EpisodeSummaryBySeason(c *gin.Context) {
 
 	tmdbId, err := generic.CheckParamInt(paramTmdbId, kERROR_MESSAGE_TMDBID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		ResponseErrorBadRequest(c, err)
 		return
 	}
 
 	var tvShowExist models.TvShow
-	database.DB.First(&tvShowExist, tmdbId)
+	if result := database.DB.First(&tvShowExist, tmdbId); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
+		return
+	}
 
-	if tvShowExist.TmdbId == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "TvShow not found",
-		})
+	if tvShowExist.Id == 0 {
+		ResponseErrorNotFound(c, models.TvShow{})
 		return
 	}
 
 	var maxSeason int
-	database.DB.Model(&models.Episode{}).Select("max(season)").Group("tmdb_id").Where(&models.Episode{TmdbId: tvShowExist.TmdbId}).First(&maxSeason)
+	if result := database.DB.Model(&models.Episode{}).Select("max(season)").Group("tmdb_id").Where(&models.Episode{TmdbId: tvShowExist.TmdbId}).First(&maxSeason); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
+		return
+	}
 	// fmt.Printf("max season [%d]\n", maxSeason)
 
 	type SeasonSummary struct {
@@ -99,10 +125,16 @@ func EpisodeSummaryBySeason(c *gin.Context) {
 	for i := 1; i <= maxSeason; i++ {
 		// fmt.Printf("season %d \n", i)
 
-		database.DB.Model(&models.Episode{}).Select("count(*)").Group("tmdb_id").Where(&models.Episode{TmdbId: tvShowExist.TmdbId, Season: i}).First(&totalEpisodes)
+		if result := database.DB.Model(&models.Episode{}).Select("count(*)").Group("tmdb_id").Where(&models.Episode{TmdbId: tvShowExist.TmdbId, Season: i}).First(&totalEpisodes); result.Error != nil {
+			ResponseErrorInternalServerError(c, result.Error)
+			return
+		}
 		// fmt.Printf("total episodes %d \n", totalEpisodes)
 
-		database.DB.Model(&models.Episode{}).Select("count(*)").Group("tmdb_id").Where(&models.Episode{TmdbId: tvShowExist.TmdbId, Season: i, Watched: true}).First(&totalEpisodesWatched)
+		if result := database.DB.Model(&models.Episode{}).Select("count(*)").Group("tmdb_id").Where(&models.Episode{TmdbId: tvShowExist.TmdbId, Season: i, Watched: true}).First(&totalEpisodesWatched); result.Error != nil {
+			ResponseErrorInternalServerError(c, result.Error)
+			return
+		}
 		// fmt.Printf("total episodes watched %d \n", totalEpisodesWatched)
 
 		responseSummary = append(responseSummary, SeasonSummary{Season: i, TotalEpisodes: totalEpisodes, TotalEpisodesWatched: totalEpisodesWatched})
@@ -115,35 +147,31 @@ func EpisodeCreate(c *gin.Context) {
 	var episode models.Episode
 
 	if err := c.ShouldBindJSON(&episode); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		ResponseErrorBadRequest(c, err)
 		return
 	}
 
 	if err := models.ValidEpisode(&episode); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		ResponseErrorBadRequest(c, err)
 		return
 	}
 
 	var tvShow models.TvShow
-	database.DB.First(&tvShow, episode.TmdbId)
-
-	if tvShow.TmdbId == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "TvShow not found",
-		})
+	if result := database.DB.Find(&tvShow, episode.TmdbId); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
 		return
 	}
 
-	if ret := database.DB.Create(&episode); ret.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": ret.Error.Error(),
-		})
+	if tvShow.Id == 0 {
+		ResponseErrorNotFound(c, models.TvShow{})
 		return
 	}
+
+	if result := database.DB.Create(&episode); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
+		return
+	}
+
 	c.JSON(http.StatusCreated, episode)
 }
 
@@ -151,47 +179,45 @@ func EpisodeCreateBatch(c *gin.Context) {
 	var episodes []models.Episode
 
 	if err := c.ShouldBindJSON(&episodes); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		ResponseErrorBadRequest(c, err)
 		return
 	}
 
 	for _, episode := range episodes {
 		if err := models.ValidEpisode(&episode); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+			ResponseErrorBadRequest(c, err)
 			return
 		}
 
 		var tvShow models.TvShow
-		database.DB.First(&tvShow, episode.TmdbId)
+		if result := database.DB.First(&tvShow, episode.TmdbId); result.Error != nil {
+			ResponseErrorInternalServerError(c, result.Error)
+			return
+		}
 
-		if tvShow.TmdbId == 0 {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": fmt.Sprintf("TvShow %d not found", episode.TmdbId),
-			})
+		if tvShow.Id == 0 {
+			ResponseErrorNotFound(c, fmt.Errorf("TvShow %d not found", episode.TmdbId))
 			return
 		}
 
 		var episodeExist models.Episode
-		rows := database.DB.Where(&models.Episode{TmdbId: episode.TmdbId, Season: episode.Season, Episode: episode.Episode}).First(&episodeExist).RowsAffected
+		result := database.DB.Where(&models.Episode{TmdbId: episode.TmdbId, Season: episode.Season, Episode: episode.Episode}).First(&episodeExist)
 
-		if rows > 0 {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": fmt.Sprintf("Episode %dx%02d already exist for %s", episode.Season, episode.Episode, tvShow.Name),
-			})
+		if result.Error != nil {
+			ResponseErrorInternalServerError(c, result.Error)
+		}
+
+		if result.RowsAffected > 0 {
+			ResponseErrorBadRequest(c, fmt.Errorf("episode %dx%02d already exist for %s", episode.Season, episode.Episode, tvShow.Name))
 			return
 		}
 	}
 
 	if result := database.DB.Create(&episodes); result.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": result.Error.Error(),
-		})
+		ResponseErrorInternalServerError(c, result.Error)
 		return
 	}
+
 	c.JSON(http.StatusCreated, episodes)
 }
 
@@ -200,44 +226,36 @@ func EpisodeEdit(c *gin.Context) {
 
 	id, err := generic.CheckParamInt(paramId, kERROR_MESSAGE_ID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		ResponseErrorBadRequest(c, err)
 		return
 	}
 
 	var episodeUpdate models.Episode
-	result := database.DB.Find(&episodeUpdate, id)
-
-	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": result.Error.Error(),
-		})
+	if result := database.DB.Find(&episodeUpdate, id); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
 		return
 	}
 
-	if episodeUpdate.TmdbId == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Episode not found",
-		})
+	if episodeUpdate.Id == 0 {
+		ResponseErrorNotFound(c, models.Episode{})
 		return
 	}
 
 	if err := c.ShouldBindJSON(&episodeUpdate); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		ResponseErrorBadRequest(c, err)
 		return
 	}
 
 	if err := models.ValidEpisode(&episodeUpdate); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		ResponseErrorBadRequest(c, err)
 		return
 	}
 
-	database.DB.Save(&episodeUpdate)
+	if result := database.DB.Save(&episodeUpdate); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
+		return
+	}
+
 	c.JSON(http.StatusOK, episodeUpdate)
 }
 
@@ -246,46 +264,33 @@ func EpisodeEditMarkWatched(c *gin.Context) {
 	paramTmdbId := c.Params.ByName("tmdbid")
 	paramSeason := c.Params.ByName("season")
 
-	var id, tmdbId, season int
+	id, err := generic.CheckParamInt(paramId, kERROR_MESSAGE_ID)
+	if err != nil {
+		ResponseErrorBadRequest(c, err)
+		return
+	}
 
-	for index, value := range []string{paramId, paramTmdbId, paramSeason} {
-		var message string
-		var err error
+	tmdbId, err := generic.CheckParamInt(paramTmdbId, kERROR_MESSAGE_TMDBID)
+	if err != nil {
+		ResponseErrorBadRequest(c, err)
+		return
+	}
 
-		switch index {
-		case 0:
-			message = kERROR_MESSAGE_ID
-			id, err = generic.CheckParamInt(value, message)
-		case 1:
-			message = kERROR_MESSAGE_TMDBID
-			tmdbId, err = generic.CheckParamInt(value, message)
-		case 2:
-			message = kERROR_MESSAGE_SEASON
-			season, err = generic.CheckParamInt(value, message)
-		}
-
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-			return
-		}
+	season, err := generic.CheckParamInt(paramSeason, kERROR_MESSAGE_SEASON)
+	if err != nil {
+		ResponseErrorBadRequest(c, err)
+		return
 	}
 
 	if paramId != "" {
 		var episodeUpdate models.Episode
-		result := database.DB.Find(&episodeUpdate, id)
-		if result.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": result.Error.Error(),
-			})
+		if result := database.DB.Find(&episodeUpdate, id); result.Error != nil {
+			ResponseErrorInternalServerError(c, result.Error)
 			return
 		}
 
 		if episodeUpdate.Id == 0 {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Episode not found",
-			})
+			ResponseErrorNotFound(c, models.Episode{})
 			return
 		}
 
@@ -296,30 +301,21 @@ func EpisodeEditMarkWatched(c *gin.Context) {
 			episodeUpdate.WatchedDate = 0
 		}
 
-		result = database.DB.Save(&episodeUpdate)
-		if result.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": result.Error.Error(),
-			})
+		if result := database.DB.Save(&episodeUpdate); result.Error != nil {
+			ResponseErrorInternalServerError(c, result.Error)
 			return
 		}
 
 		c.JSON(http.StatusOK, episodeUpdate)
 	} else {
 		var episodesToUpdate []models.Episode
-		result := database.DB.Where(&models.Episode{TmdbId: tmdbId, Season: season}).Find(&episodesToUpdate)
-
-		if result.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": result.Error.Error(),
-			})
+		if result := database.DB.Where(&models.Episode{TmdbId: tmdbId, Season: season}).Find(&episodesToUpdate); result.Error != nil {
+			ResponseErrorInternalServerError(c, result.Error)
 			return
 		}
 
 		if len(episodesToUpdate) == 0 {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Episodes not found",
-			})
+			ResponseErrorNotFound(c, models.Episode{})
 			return
 		}
 
@@ -334,11 +330,8 @@ func EpisodeEditMarkWatched(c *gin.Context) {
 			episodesToUpdate[index] = episode
 		}
 
-		result = database.DB.Save(&episodesToUpdate)
-		if result.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": result.Error.Error(),
-			})
+		if result := database.DB.Save(&episodesToUpdate); result.Error != nil {
+			ResponseErrorInternalServerError(c, result.Error)
 			return
 		}
 
@@ -357,23 +350,25 @@ func EpisodeDelete(c *gin.Context) {
 		var id int
 		id, err = generic.CheckParamInt(paramId, kERROR_MESSAGE_ID)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+			ResponseErrorBadRequest(c, err)
 			return
 		}
 
 		var episode models.Episode
-		database.DB.Find(&episode, id)
-
-		if episode.Id == 0 {
-			c.JSON(http.StatusNotFound, gin.H{
-				"message": "episode not found",
-			})
+		if result := database.DB.Find(&episode, id); result.Error != nil {
+			ResponseErrorInternalServerError(c, result.Error)
 			return
 		}
 
-		database.DB.Delete(&episode, id)
+		if episode.Id == 0 {
+			ResponseErrorNotFound(c, models.Episode{})
+			return
+		}
+
+		if result := database.DB.Delete(&episode, id); result.Error != nil {
+			ResponseErrorInternalServerError(c, result.Error)
+			return
+		}
 
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Episode deleted",
@@ -385,17 +380,13 @@ func EpisodeDelete(c *gin.Context) {
 
 		tmdbId, err = generic.CheckParamInt(paramTmdbId, kERROR_MESSAGE_TMDBID)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+			ResponseErrorBadRequest(c, err)
 			return
 		}
 
 		season, err = generic.CheckParamInt(paramSeason, kERROR_MESSAGE_SEASON)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+			ResponseErrorBadRequest(c, err)
 			return
 		}
 
@@ -403,16 +394,12 @@ func EpisodeDelete(c *gin.Context) {
 		result = database.DB.Where(&models.Episode{TmdbId: tmdbId, Season: season}).Delete(&episodes)
 
 		if result.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": result.Error.Error(),
-			})
+			ResponseErrorInternalServerError(c, result.Error)
 			return
 		}
 
 		if result.RowsAffected == 0 {
-			c.JSON(http.StatusNotFound, gin.H{
-				"message": "Episodes not found",
-			})
+			ResponseErrorNotFound(c, models.Episode{})
 			return
 		}
 
@@ -425,14 +412,5 @@ func EpisodeDelete(c *gin.Context) {
 }
 
 func EpisodeTruncate(c *gin.Context) {
-	// if result := database.DB.Where("tmdb_id is not null").Delete(&models.Episode{}); result.Error != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{
-	// 		"error": result.Error.Error(),
-	// 	})
-	// 	return
-	// }
-	// c.JSON(http.StatusOK, gin.H{
-	// 	"message": "Episodes truncated",
-	// })
 	Truncate(c, models.Episode{})
 }
