@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"reflect"
+	"strings"
 	"time"
 
 	"gopkg.in/validator.v2"
@@ -19,9 +20,15 @@ type TvShow struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+func (t *TvShow) TrimSpace() {
+	t.Name = strings.TrimSpace(t.Name)
+	t.Overview = strings.TrimSpace(t.Overview)
+}
+
 // Validator
 
 func ValidTvShow(tvShow *TvShow) error {
+	tvShow.TrimSpace()
 	validator.SetValidationFunc("checkGroup", checkGroup)
 	validator.SetValidationFunc("checkStatus", checkStatus)
 	if err := validator.Validate(tvShow); err != nil {
