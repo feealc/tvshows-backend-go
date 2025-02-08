@@ -27,7 +27,7 @@ func TvShowListById(c *gin.Context) {
 
 	id, err := generic.CheckParamInt(paramId, kERROR_MESSAGE_ID)
 	if err != nil {
-		ResponseError(c, err, 0)
+		ResponseErrorBadRequest(c, err)
 		return
 	}
 
