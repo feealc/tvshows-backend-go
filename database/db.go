@@ -1,6 +1,7 @@
 package database
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"os"
@@ -12,10 +13,9 @@ import (
 )
 
 var (
-	DB  *gorm.DB
-	err error
-
-	CLOUD_NAME string = "googlecloud"
+	sqlDB *sql.DB
+	DB    *gorm.DB
+	err   error
 
 	DB_HOST string
 	DB_PORT string
@@ -27,24 +27,27 @@ var (
 func ConnectDataBase() {
 	dsn := buildConnectionString()
 
-	if os.Getenv("CLOUD_NAME") == CLOUD_NAME {
-		log.Println("Connecting to Cloud SQL database")
-		DB, err = gorm.Open(postgres.New(postgres.Config{
-			DriverName: "cloudsqlpostgres",
-			DSN:        dsn,
-		}))
-	} else {
-		log.Println("Connecting to local database")
-		DB, err = gorm.Open(postgres.Open(dsn))
+	sqlDB, err = sql.Open("pgx", dsn)
+	if err != nil {
+		log.Println(err.Error())
+		log.Printf("dsn [%s]", dsn)
+		log.Panic("Erro ao conectar com banco de dados usando SQL")
+		return
 	}
+
+	DB, err = gorm.Open(postgres.New(postgres.Config{
+		Conn: sqlDB,
+	}), &gorm.Config{})
 
 	if err != nil {
 		log.Println(err.Error())
 		log.Printf("dsn [%s]", dsn)
-		log.Panic("Erro ao conectar com banco de dados")
-	} else {
-		log.Println("Database connected!")
+		log.Panic("Erro ao conectar com banco de dados usando sqlDB e GORM")
+		return
 	}
+
+	sqlDB = nil
+	log.Println("Conectado com sucesso usando GORM")
 
 	DB.AutoMigrate(&models.TvShow{})
 	DB.AutoMigrate(&models.Episode{})

@@ -10,10 +10,12 @@ import (
 )
 
 type Episode struct {
-	TmdbId      int       `json:"tmdb_id" gorm:"primaryKey" validate:"nonzero"`
-	Season      int       `json:"season" gorm:"primaryKey" validate:"nonzero"`
-	Episode     int       `json:"episode" gorm:"primaryKey" validate:"nonzero"`
+	Id          int       `json:"id" gorm:"primaryKey;autoIncrement"`
+	TmdbId      int       `json:"tmdb_id" gorm:"index:idx_episode" validate:"nonzero"`
+	Season      int       `json:"season" gorm:"index:idx_episode" validate:"nonzero"`
+	Episode     int       `json:"episode" gorm:"index:idx_episode" validate:"nonzero"`
 	Name        string    `json:"name" validate:"min=2,max=80"`
+	Overview    string    `json:"overview"`
 	AirDate     int       `json:"air_date" validate:"checkDate"`
 	Watched     bool      `json:"watched"`
 	WatchedDate int       `json:"watched_date" validate:"checkDate"`

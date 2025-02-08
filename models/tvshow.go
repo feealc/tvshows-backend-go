@@ -9,8 +9,10 @@ import (
 )
 
 type TvShow struct {
-	TmdbId    int       `json:"tmdb_id" gorm:"primaryKey" validate:"nonzero"`
-	Name      string    `json:"name" gorm:"unique" validate:"min=2,max=80"`
+	Id        int       `json:"id" gorm:"primaryKey;autoIncrement"`
+	TmdbId    int       `json:"tmdb_id" gorm:"uniqueIndex" validate:"nonzero"`
+	Name      string    `json:"name" gorm:"uniqueIndex" validate:"min=2,max=80"`
+	Overview  string    `json:"overview"`
 	GroupType int       `json:"group" validate:"checkGroup"`
 	Status    int       `json:"status" validate:"checkStatus"`
 	CreatedAt time.Time `json:"created_at"`
