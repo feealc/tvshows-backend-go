@@ -8,32 +8,40 @@ import (
 func HandleRequests() {
 	r := gin.Default()
 
-	// Health
-	r.GET("/health", controllers.Health)
+	api := r.Group("/api")
+	{
+		v1 := api.Group("/v1")
+		{
+			// Health
+			v1.GET("/health", controllers.Health)
 
-	// TvShows
-	r.GET("/tvshows", controllers.TvShowListAll)
-	r.GET("/tvshows/:id", controllers.TvShowListById)
-	r.POST("/tvshows/create", controllers.TvShowCreate)
-	r.POST("/tvshows/create/batch", controllers.TvShowCreateBatch)
-	r.PUT("/tvshows/:id", controllers.TvShowEdit)
-	r.DELETE("/tvshows/:id", controllers.TvShowDelete)
-	r.DELETE("/tvshows/truncate", controllers.TvShowTruncate)
+			// TvShows
+			v1.GET("/tvshows", controllers.TvShowListAll)
+			v1.GET("/tvshows/:id", controllers.TvShowListById)
+			v1.POST("/tvshows/create", controllers.TvShowCreate)
+			v1.POST("/tvshows/create/batch", controllers.TvShowCreateBatch)
+			v1.PUT("/tvshows/:id", controllers.TvShowEdit)
+			v1.DELETE("/tvshows/:id", controllers.TvShowDelete)
+			v1.DELETE("/tvshows/truncate", controllers.TvShowTruncate)
 
-	// Episodes
-	r.GET("/episodes", controllers.EpisodeListAll)
-	r.GET("/episodes/:tmdbid", controllers.EpisodeListByTmdbId)
-	r.GET("/episodes/:tmdbid/:season", controllers.EpisodeListByTmdbIdAndSeason)
-	r.GET("/episodes/:tmdbid/summary", controllers.EpisodeSummaryBySeason)
-	r.POST("/episodes/create", controllers.EpisodeCreate)
-	r.POST("/episodes/create/batch", controllers.EpisodeCreateBatch)
-	r.PUT("/episodes/:tmdbid/:season/:episode", controllers.EpisodeEdit)
-	r.PUT("/episodes/:tmdbid/:season/watched", controllers.EpisodeEditMarkWatched)
-	r.PUT("/episodes/:tmdbid/:season/:episode/watched", controllers.EpisodeEditMarkWatched)
-	r.DELETE("/episodes/:tmdbid", controllers.EpisodeDelete)
-	r.DELETE("/episodes/:tmdbid/:season", controllers.EpisodeDelete)
-	r.DELETE("/episodes/:tmdbid/:season/:episode", controllers.EpisodeDelete)
-	r.DELETE("/episodes/truncate", controllers.EpisodeTruncate)
+			// Episodes
+			v1.GET("/episodes", controllers.EpisodeListAll)
+			v1.GET("/episodes/:tmdbid", controllers.EpisodeListByTmdbId)
+			v1.GET("/episodes/:tmdbid/:season", controllers.EpisodeListByTmdbIdAndSeason)
+			v1.GET("/episodes/:tmdbid/summary", controllers.EpisodeSummaryBySeason)
+			v1.POST("/episodes/create", controllers.EpisodeCreate)
+			v1.POST("/episodes/create/batch", controllers.EpisodeCreateBatch)
+			v1.PUT("/episodes/edit/:id", controllers.EpisodeEdit)
+			v1.PUT("/episodes/watched/:id", controllers.EpisodeEditMarkWatched)
+			v1.PUT("/episodes/watched/season/:tmdbid/:season", controllers.EpisodeEditMarkWatched)
+			v1.DELETE("/episodes/delete/:id", controllers.EpisodeDelete)
+			v1.DELETE("/episodes/delete/tvshow/:tmdbid", controllers.EpisodeDelete)
+			v1.DELETE("/episodes/delete/season/:tmdbid/:season", controllers.EpisodeDelete)
+			v1.DELETE("/episodes/truncate", controllers.EpisodeTruncate)
+		}
+	}
+
+	r.NoRoute(controllers.RouteNotFound)
 
 	r.Run(":8080")
 }

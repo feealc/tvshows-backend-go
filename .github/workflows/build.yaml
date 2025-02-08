@@ -1,9 +1,10 @@
 name: Build and Push to Artifact Registry
 
 on:
-    push:
-        branches:
-          - feature/google-cloud
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ feature/google-cloud ]
 
 jobs:
     build-push-artifact:
