@@ -49,6 +49,10 @@ func ResponseErrorNotFound(c *gin.Context, model interface{}) {
 	ResponseError(c, errors.New(name+" not found"), http.StatusNotFound)
 }
 
+func ResponseErrorUnprocessableEntity(c *gin.Context, err error) {
+	ResponseError(c, err, http.StatusUnprocessableEntity)
+}
+
 func ResponseErrorInternalServerError(c *gin.Context, err error) {
 	ResponseError(c, err, http.StatusInternalServerError)
 }

@@ -48,12 +48,23 @@ func TvShowCreate(c *gin.Context) {
 	var tvShow models.TvShow
 
 	if err := c.ShouldBindJSON(&tvShow); err != nil {
-		ResponseErrorBadRequest(c, err)
+		ResponseErrorUnprocessableEntity(c, err)
 		return
 	}
 
 	if err := models.ValidTvShow(&tvShow); err != nil {
-		ResponseErrorBadRequest(c, err)
+		ResponseErrorUnprocessableEntity(c, err)
+		return
+	}
+
+	var tvShowExist models.TvShow
+	if result := database.DB.Where(&models.TvShow{TmdbId: tvShowExist.TmdbId}).Find(&tvShowExist); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
+		return
+	}
+
+	if tvShowExist.TmdbId > 0 {
+		ResponseErrorBadRequest(c, fmt.Errorf("TvShow %s (TMDB ID %d) already exist", tvShow.Name, tvShow.TmdbId))
 		return
 	}
 
@@ -69,18 +80,18 @@ func TvShowCreateBatch(c *gin.Context) {
 	var tvShows []models.TvShow
 
 	if err := c.ShouldBindJSON(&tvShows); err != nil {
-		ResponseErrorBadRequest(c, err)
+		ResponseErrorUnprocessableEntity(c, err)
 		return
 	}
 
 	for _, tvShow := range tvShows {
 		if err := models.ValidTvShow(&tvShow); err != nil {
-			ResponseErrorBadRequest(c, err)
+			ResponseErrorUnprocessableEntity(c, err)
 			return
 		}
 
 		var tvShowExist models.TvShow
-		if result := database.DB.First(&tvShowExist, tvShow.TmdbId); result.Error != nil {
+		if result := database.DB.Where(&models.TvShow{TmdbId: tvShowExist.TmdbId}).Find(&tvShowExist); result.Error != nil {
 			ResponseErrorInternalServerError(c, result.Error)
 			return
 		}
@@ -120,12 +131,12 @@ func TvShowEdit(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&tvShow); err != nil {
-		ResponseErrorBadRequest(c, err)
+		ResponseErrorUnprocessableEntity(c, err)
 		return
 	}
 
 	if err := models.ValidTvShow(&tvShow); err != nil {
-		ResponseErrorBadRequest(c, err)
+		ResponseErrorUnprocessableEntity(c, err)
 		return
 	}
 
