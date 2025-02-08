@@ -5,25 +5,39 @@ import (
 	"net/http"
 
 	"github.com/feealc/tvshows-backend-go/database"
+	"github.com/feealc/tvshows-backend-go/generic"
 	"github.com/feealc/tvshows-backend-go/models"
 	"github.com/gin-gonic/gin"
 )
 
 func TvShowListAll(c *gin.Context) {
 	var tvShows []models.TvShow
-	database.DB.Order("name").Find(&tvShows)
+
+	if result := database.DB.Order("name").Find(&tvShows); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
+		return
+	}
+
 	c.JSON(http.StatusOK, tvShows)
 }
 
 func TvShowListById(c *gin.Context) {
 	var tvShow models.TvShow
-	id := c.Params.ByName("id")
-	database.DB.First(&tvShow, id)
+	paramId := c.Params.ByName("id")
 
-	if tvShow.TmdbId == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "TvShow not found",
-		})
+	id, err := generic.CheckParamInt(paramId, kERROR_MESSAGE_ID)
+	if err != nil {
+		ResponseError(c, err, 0)
+		return
+	}
+
+	if result := database.DB.Find(&tvShow, id); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
+		return
+	}
+
+	if tvShow.Id == 0 {
+		ResponseErrorNotFound(c, models.TvShow{})
 		return
 	}
 
@@ -34,20 +48,20 @@ func TvShowCreate(c *gin.Context) {
 	var tvShow models.TvShow
 
 	if err := c.ShouldBindJSON(&tvShow); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		ResponseErrorBadRequest(c, err)
 		return
 	}
 
 	if err := models.ValidTvShow(&tvShow); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		ResponseErrorBadRequest(c, err)
 		return
 	}
 
-	database.DB.Create(&tvShow)
+	if result := database.DB.Create(&tvShow); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
+		return
+	}
+
 	c.JSON(http.StatusCreated, tvShow)
 }
 
@@ -55,83 +69,99 @@ func TvShowCreateBatch(c *gin.Context) {
 	var tvShows []models.TvShow
 
 	if err := c.ShouldBindJSON(&tvShows); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		ResponseErrorBadRequest(c, err)
 		return
 	}
 
 	for _, tvShow := range tvShows {
 		if err := models.ValidTvShow(&tvShow); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+			ResponseErrorBadRequest(c, err)
 			return
 		}
 
 		var tvShowExist models.TvShow
-		database.DB.First(&tvShowExist, tvShow.TmdbId)
+		if result := database.DB.First(&tvShowExist, tvShow.TmdbId); result.Error != nil {
+			ResponseErrorInternalServerError(c, result.Error)
+			return
+		}
 
 		if tvShowExist.TmdbId > 0 {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": fmt.Sprintf("TvShow %s (TMDB ID %d) already exist", tvShow.Name, tvShow.TmdbId),
-			})
+			ResponseErrorBadRequest(c, fmt.Errorf("TvShow %s (TMDB ID %d) already exist", tvShow.Name, tvShow.TmdbId))
 			return
 		}
 	}
 
 	if result := database.DB.Create(&tvShows); result.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": result.Error.Error(),
-		})
+		ResponseErrorInternalServerError(c, result.Error)
 		return
 	}
+
 	c.JSON(http.StatusCreated, tvShows)
 }
 
 func TvShowEdit(c *gin.Context) {
 	var tvShow models.TvShow
-	id := c.Params.ByName("id")
-	database.DB.First(&tvShow, id)
+	paramId := c.Params.ByName("id")
 
-	if tvShow.TmdbId == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "TvShow not found",
-		})
+	id, err := generic.CheckParamInt(paramId, kERROR_MESSAGE_ID)
+	if err != nil {
+		ResponseError(c, err, 0)
+		return
+	}
+
+	if result := database.DB.Find(&tvShow, id); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
+		return
+	}
+
+	if tvShow.Id == 0 {
+		ResponseErrorNotFound(c, models.TvShow{})
 		return
 	}
 
 	if err := c.ShouldBindJSON(&tvShow); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		ResponseErrorBadRequest(c, err)
 		return
 	}
 
 	if err := models.ValidTvShow(&tvShow); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		ResponseErrorBadRequest(c, err)
 		return
 	}
 
-	database.DB.Save(&tvShow)
+	if result := database.DB.Save(&tvShow); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
+		return
+	}
+
 	c.JSON(http.StatusOK, tvShow)
 }
 
 func TvShowDelete(c *gin.Context) {
 	var tvShow models.TvShow
-	id := c.Params.ByName("id")
-	database.DB.First(&tvShow, id)
+	paramId := c.Params.ByName("id")
 
-	if tvShow.TmdbId == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "TvShow not found",
-		})
+	id, err := generic.CheckParamInt(paramId, kERROR_MESSAGE_ID)
+	if err != nil {
+		ResponseError(c, err, 0)
 		return
 	}
 
-	database.DB.Delete(&tvShow, id)
+	if result := database.DB.Find(&tvShow, id); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
+		return
+	}
+
+	if tvShow.Id == 0 {
+		ResponseErrorNotFound(c, models.TvShow{})
+		return
+	}
+
+	if result := database.DB.Delete(&tvShow, id); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "TvShow deleted successfully",
 	})

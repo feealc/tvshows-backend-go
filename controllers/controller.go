@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -27,6 +28,29 @@ func RouteNotFound(c *gin.Context) {
 	c.JSON(http.StatusBadRequest, gin.H{
 		"message": "Route not found",
 	})
+}
+
+func ResponseError(c *gin.Context, err error, httpStatusCode int) {
+	if httpStatusCode == 0 {
+		httpStatusCode = http.StatusBadRequest
+	}
+
+	c.JSON(httpStatusCode, gin.H{
+		"error": err.Error(),
+	})
+}
+
+func ResponseErrorBadRequest(c *gin.Context, err error) {
+	ResponseError(c, err, http.StatusBadRequest)
+}
+
+func ResponseErrorNotFound(c *gin.Context, model interface{}) {
+	name := generic.GetStructName(model)
+	ResponseError(c, errors.New(name+" not found"), http.StatusNotFound)
+}
+
+func ResponseErrorInternalServerError(c *gin.Context, err error) {
+	ResponseError(c, err, http.StatusInternalServerError)
 }
 
 func Truncate(c *gin.Context, table interface{}) {
