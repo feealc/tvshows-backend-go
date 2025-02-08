@@ -84,11 +84,12 @@ func TvShowCreateBatch(c *gin.Context) {
 		return
 	}
 
-	for _, tvShow := range tvShows {
+	for index, tvShow := range tvShows {
 		if err := models.ValidTvShow(&tvShow); err != nil {
 			ResponseErrorUnprocessableEntity(c, err)
 			return
 		}
+		tvShows[index] = tvShow
 
 		var tvShowExist models.TvShow
 		if result := database.DB.Where(&models.TvShow{TmdbId: tvShowExist.TmdbId}).Find(&tvShowExist); result.Error != nil {

@@ -224,11 +224,12 @@ func EpisodeCreateBatch(c *gin.Context) {
 		return
 	}
 
-	for _, episode := range episodes {
+	for index, episode := range episodes {
 		if err := models.ValidEpisode(&episode); err != nil {
 			ResponseErrorUnprocessableEntity(c, err)
 			return
 		}
+		episodes[index] = episode
 
 		var tvShowExist models.TvShow
 		if result := database.DB.Where(&models.TvShow{TmdbId: episode.TmdbId}).Find(&tvShowExist); result.Error != nil {
@@ -237,7 +238,7 @@ func EpisodeCreateBatch(c *gin.Context) {
 		}
 
 		if tvShowExist.Id == 0 {
-			ResponseErrorNotFound(c, fmt.Errorf("TvShow %d not found", episode.TmdbId))
+			ResponseErrorNotFound(c, models.TvShow{})
 			return
 		}
 

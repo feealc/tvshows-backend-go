@@ -4,6 +4,7 @@ import (
 	"errors"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"gopkg.in/validator.v2"
@@ -23,9 +24,15 @@ type Episode struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+func (e *Episode) TrimSpace() {
+	e.Name = strings.TrimSpace(e.Name)
+	e.Overview = strings.TrimSpace(e.Overview)
+}
+
 // Validator
 
 func ValidEpisode(episode *Episode) error {
+	episode.TrimSpace()
 	validator.SetValidationFunc("checkDate", checkDate)
 	if err := validator.Validate(episode); err != nil {
 		return err
