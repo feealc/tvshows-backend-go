@@ -174,8 +174,14 @@ func TvShowDelete(c *gin.Context) {
 		return
 	}
 
+	var episodesToDelete []models.Episode
+	if result := database.DB.Where(&models.Episode{TmdbId: tvShow.TmdbId}).Delete(&episodesToDelete); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "TvShow deleted successfully",
+		"message": "TvShow and episodes deleted successfully",
 	})
 }
 
