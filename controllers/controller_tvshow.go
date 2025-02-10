@@ -58,12 +58,12 @@ func TvShowCreate(c *gin.Context) {
 	}
 
 	var tvShowExist models.TvShow
-	if result := database.DB.Where(&models.TvShow{TmdbId: tvShowExist.TmdbId}).Find(&tvShowExist); result.Error != nil {
+	if result := database.DB.Where(&models.TvShow{TmdbId: tvShow.TmdbId}).Find(&tvShowExist); result.Error != nil {
 		ResponseErrorInternalServerError(c, result.Error)
 		return
 	}
 
-	if tvShowExist.TmdbId > 0 {
+	if tvShowExist.Id > 0 {
 		ResponseErrorBadRequest(c, fmt.Errorf("TvShow %s (TMDB ID %d) already exist", tvShow.Name, tvShow.TmdbId))
 		return
 	}
@@ -92,7 +92,7 @@ func TvShowCreateBatch(c *gin.Context) {
 		tvShows[index] = tvShow
 
 		var tvShowExist models.TvShow
-		if result := database.DB.Where(&models.TvShow{TmdbId: tvShowExist.TmdbId}).Find(&tvShowExist); result.Error != nil {
+		if result := database.DB.Where(&models.TvShow{TmdbId: tvShow.TmdbId}).Find(&tvShowExist); result.Error != nil {
 			ResponseErrorInternalServerError(c, result.Error)
 			return
 		}
