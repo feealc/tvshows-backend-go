@@ -88,16 +88,16 @@ func EpisodeListByTmdbIdAndSeason(c *gin.Context) {
 }
 
 func EpisodeSummaryBySeason(c *gin.Context) {
-	paramTmdbId := c.Params.ByName("tmdbid")
+	paramId := c.Params.ByName("id")
 
-	tmdbId, err := generic.CheckParamInt(paramTmdbId, kERROR_MESSAGE_TMDBID)
+	id, err := generic.CheckParamInt(paramId, kERROR_MESSAGE_ID)
 	if err != nil {
 		ResponseErrorBadRequest(c, err)
 		return
 	}
 
 	var tvShowExist models.TvShow
-	if result := database.DB.Where(&models.TvShow{TmdbId: tmdbId}).Find(&tvShowExist); result.Error != nil {
+	if result := database.DB.Find(&tvShowExist, id); result.Error != nil {
 		ResponseErrorInternalServerError(c, result.Error)
 		return
 	}
@@ -108,7 +108,7 @@ func EpisodeSummaryBySeason(c *gin.Context) {
 	}
 
 	var episodes []models.Episode
-	if result := database.DB.Where(&models.Episode{TmdbId: tmdbId}).Order(kEPISODE_ORDER_BY_TMDBID_SEASON_EPISODE).Find(&episodes); result.Error != nil {
+	if result := database.DB.Where(&models.Episode{TmdbId: tvShowExist.TmdbId}).Order(kEPISODE_ORDER_BY_TMDBID_SEASON_EPISODE).Find(&episodes); result.Error != nil {
 		ResponseErrorInternalServerError(c, result.Error)
 		return
 	}
