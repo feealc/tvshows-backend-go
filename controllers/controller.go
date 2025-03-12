@@ -7,6 +7,7 @@ import (
 
 	"github.com/feealc/tvshows-backend-go/database"
 	"github.com/feealc/tvshows-backend-go/generic"
+	"github.com/feealc/tvshows-backend-go/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -57,39 +58,47 @@ func ResponseErrorInternalServerError(c *gin.Context, err error) {
 	ResponseError(c, err, http.StatusInternalServerError)
 }
 
-func Truncate(c *gin.Context, table interface{}) {
+func Truncate(c *gin.Context, table interface{}) (map[string]string, error) {
 	mode := c.Query("mode")
 	// mode := c.DefaultQuery("mode", "drop and create")
 
 	name := generic.GetStructName(table)
-	response := gin.H{
-		"message": name + " truncated",
-	}
+	response := make(map[string]string)
+	response["message"] = name + " truncated"
 
 	if mode == "delete" {
 		if result := database.DB.Where("id is not null").Delete(&table); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": result.Error.Error(),
-			})
-			return
+			return nil, result.Error
 		}
 	} else {
 		if err := database.DB.Migrator().DropTable(&table); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": err.Error(),
-			})
-			return
+			return nil, err
 		}
 
 		if err := database.DB.Migrator().CreateTable(&table); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": err.Error(),
-			})
-			return
+			return nil, err
 		}
 
 		response["mode"] = "drop and create"
 	}
 
-	c.JSON(http.StatusOK, response)
+	return response, nil
+}
+
+func TruncateAll(c *gin.Context) {
+	var err error
+
+	if _, err = Truncate(c, models.TvShow{}); err != nil {
+		ResponseErrorInternalServerError(c, err)
+		return
+	}
+
+	if _, err = Truncate(c, models.Episode{}); err != nil {
+		ResponseErrorInternalServerError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "All truncated",
+	})
 }

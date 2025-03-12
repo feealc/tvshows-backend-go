@@ -459,5 +459,10 @@ func EpisodeDelete(c *gin.Context) {
 }
 
 func EpisodeTruncate(c *gin.Context) {
-	Truncate(c, models.Episode{})
+	response, err := Truncate(c, models.Episode{})
+	if err != nil {
+		ResponseErrorInternalServerError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, response)
 }
