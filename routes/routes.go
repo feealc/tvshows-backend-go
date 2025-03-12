@@ -38,6 +38,9 @@ func HandleRequests() {
 			v1.DELETE("/episodes/delete/tvshow/:tmdbid", controllers.EpisodeDelete)
 			v1.DELETE("/episodes/delete/season/:tmdbid/:season", controllers.EpisodeDelete)
 			v1.DELETE("/episodes/truncate", controllers.EpisodeTruncate)
+
+			//
+			v1.DELETE("/truncate/all", controllers.TruncateAll)
 		}
 	}
 

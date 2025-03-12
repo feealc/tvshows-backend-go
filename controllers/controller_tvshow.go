@@ -186,5 +186,10 @@ func TvShowDelete(c *gin.Context) {
 }
 
 func TvShowTruncate(c *gin.Context) {
-	Truncate(c, models.TvShow{})
+	response, err := Truncate(c, models.TvShow{})
+	if err != nil {
+		ResponseErrorInternalServerError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, response)
 }
