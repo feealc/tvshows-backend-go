@@ -17,6 +17,7 @@ func HandleRequests() {
 
 			// TvShows
 			v1.GET("/tvshows", controllers.TvShowListAll)
+			v1.GET("/tvshows/episodes", controllers.TvShowListAllUnwatchedEpisodes)
 			v1.GET("/tvshows/:id", controllers.TvShowListById)
 			v1.POST("/tvshows/create", controllers.TvShowCreate)
 			v1.POST("/tvshows/create/batch", controllers.TvShowCreateBatch)

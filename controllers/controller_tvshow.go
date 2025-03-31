@@ -18,7 +18,52 @@ func TvShowListAll(c *gin.Context) {
 		return
 	}
 
+	for index, tvShow := range tvShows {
+		var episodes []models.Episode
+
+		if result := database.DB.Where("tmdb_id = ? and watched = false", tvShow.TmdbId).Order(kEPISODE_ORDER_BY_TMDBID_SEASON_EPISODE).Find(&episodes); result.Error != nil {
+			ResponseErrorInternalServerError(c, result.Error)
+			return
+		}
+
+		if len(episodes) > 0 {
+			ep := episodes[0]
+			tvShow.UnwatchedSeason = ep.Season
+			tvShow.UnwatchedEpisode = ep.Episode
+			tvShow.UnwatchedCount = len(episodes) - 1
+		}
+		tvShows[index] = tvShow
+	}
+
 	c.JSON(http.StatusOK, tvShows)
+}
+
+func TvShowListAllUnwatchedEpisodes(c *gin.Context) {
+	var tvShows []models.TvShow
+
+	if result := database.DB.Order("name").Find(&tvShows); result.Error != nil {
+		ResponseErrorInternalServerError(c, result.Error)
+		return
+	}
+
+	type TvShowEpisodes struct {
+		TvShow   models.TvShow    `json:"tv_show"`
+		Episodes []models.Episode `json:"episodes"`
+	}
+	var response []TvShowEpisodes
+
+	for _, tvShow := range tvShows {
+		var episodes []models.Episode
+
+		if result := database.DB.Where("tmdb_id = ? and watched = false", tvShow.TmdbId).Order(kEPISODE_ORDER_BY_TMDBID_SEASON_EPISODE).Find(&episodes); result.Error != nil {
+			ResponseErrorInternalServerError(c, result.Error)
+			return
+		}
+
+		response = append(response, TvShowEpisodes{TvShow: tvShow, Episodes: episodes})
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 func TvShowListById(c *gin.Context) {
