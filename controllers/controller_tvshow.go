@@ -93,7 +93,7 @@ func TvShowCreate(c *gin.Context) {
 	var tvShow models.TvShow
 
 	if err := c.ShouldBindJSON(&tvShow); err != nil {
-		ResponseErrorUnprocessableEntity(c, err)
+		ResponseErrorBadRequest(c, err)
 		return
 	}
 
@@ -125,7 +125,7 @@ func TvShowCreateBatch(c *gin.Context) {
 	var tvShows []models.TvShow
 
 	if err := c.ShouldBindJSON(&tvShows); err != nil {
-		ResponseErrorUnprocessableEntity(c, err)
+		ResponseErrorBadRequest(c, err)
 		return
 	}
 

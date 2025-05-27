@@ -11,6 +11,15 @@ services:
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
 
+  postgres-unittest:
+    image: "postgres"
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=root
+    ports:
+      - "5433:5432"
+
   pgadmin-compose:
     image: dpage/pgadmin4
     environment:
@@ -20,3 +29,4 @@ services:
       - "54321:80"
     depends_on:
       - postgres
+      - postgres-unittest

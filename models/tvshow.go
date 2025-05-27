@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 	"time"
@@ -26,6 +27,32 @@ type TvShow struct {
 func (t *TvShow) TrimSpace() {
 	t.Name = strings.TrimSpace(t.Name)
 	t.Overview = strings.TrimSpace(t.Overview)
+}
+
+func (t *TvShow) Dump() {
+	fmt.Printf("Id=%d TmdbId=%d Name=[%s] Overview=[%s] Group=%d Status=%d UnwSeason=%d UnwEp=%d UnwCount=%d Cr=%s Up=%s \n",
+		t.Id,
+		t.TmdbId,
+		t.Name,
+		t.Overview,
+		t.GroupType,
+		t.Status,
+		t.UnwatchedSeason,
+		t.UnwatchedEpisode,
+		t.UnwatchedCount,
+		t.CreatedAt.Format("2006-01-02 15:04:05"),
+		t.UpdatedAt.Format("2006-01-02 15:04:05"),
+	)
+}
+
+func (t *TvShow) DumpShort() {
+	fmt.Printf("Id=%d TmdbId=%d Name=[%s] Group=%d Status=%d \n",
+		t.Id,
+		t.TmdbId,
+		t.Name,
+		t.GroupType,
+		t.Status,
+	)
 }
 
 // Validator

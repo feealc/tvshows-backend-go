@@ -21,7 +21,7 @@ const (
 func Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message":   "Ok",
-		"date_time": time.Now().String(),
+		"date_time": time.Now().Format("2006-01-02 15:04:05"),
 	})
 }
 

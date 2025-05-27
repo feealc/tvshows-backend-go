@@ -177,7 +177,7 @@ func EpisodeCreate(c *gin.Context) {
 	var episode models.Episode
 
 	if err := c.ShouldBindJSON(&episode); err != nil {
-		ResponseErrorUnprocessableEntity(c, err)
+		ResponseErrorBadRequest(c, err)
 		return
 	}
 
@@ -220,7 +220,7 @@ func EpisodeCreateBatch(c *gin.Context) {
 	var episodes []models.Episode
 
 	if err := c.ShouldBindJSON(&episodes); err != nil {
-		ResponseErrorUnprocessableEntity(c, err)
+		ResponseErrorBadRequest(c, err)
 		return
 	}
 
@@ -283,7 +283,7 @@ func EpisodeEdit(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&episodeUpdate); err != nil {
-		ResponseErrorUnprocessableEntity(c, err)
+		ResponseErrorBadRequest(c, err)
 		return
 	}
 
